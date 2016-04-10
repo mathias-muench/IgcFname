@@ -23,6 +23,23 @@ char *int2base36(unsigned int n, char *buf)
 static const char b36[] = "0123456789ABCDEFGHIJKLMNOPQRSTUFWXYZ";
 static const char *longFormat = "%04d-%02d-%02d-%3s-%3s-%02d.%3s";
 static const char *shortFormat = "%1d%c%c%c%3s%c.%s";
+static const char *manufacturers[27] =
+	{ "GCS", "", "CAM", "DSX", "EWA", "FIL", "FLA", "SCH", "ACT", "", "", "LXN", "IMI", "NTE", "", "PES", "", "PRT",
+	"SDI", "TRI", "", "", "WES", "XXX", "", "ZAN", NULL
+};
+
+static char manufacturer(char *man)
+{
+	char *c;
+	for (c = man; *c; c++) {
+		*c = toupper(*c);
+	}
+	const char **p = manufacturers;
+	while (*p && strcmp(man, *p)) {
+		p++;
+	}
+	return p - manufacturers + 'A';
+}
 
 static char *l2s(const char *name, char *conv)
 {
@@ -34,7 +51,7 @@ static char *l2s(const char *name, char *conv)
 		for (c = ser; *c; c++) {
 			*c = toupper(*c);
 		}
-		sprintf(conv, shortFormat, yyyy - 2010, b36[mm], b36[dd], man[0], ser, b36[fl], ext);
+		sprintf(conv, shortFormat, yyyy % 10, b36[mm], b36[dd], manufacturer(man), ser, b36[fl], ext);
 	} else {
 		*conv = '\0';
 	}
@@ -46,11 +63,6 @@ unsigned b10(char c)
 	return strchr(b36, c) - b36;
 }
 
-const char *man(char c)
-{
-	return "MAN";
-}
-
 static char *s2l(const char *name, char *conv)
 {
 	char ser[4], ext[4];
@@ -58,7 +70,7 @@ static char *s2l(const char *name, char *conv)
 	char m, d, c, f;
 
 	if (7 == sscanf(name, shortFormat, &y, &m, &d, &c, ser, &f, ext)) {
-		sprintf(conv, longFormat, y + 2010, b10(m), b10(d), man(c), ser, b10(f), ext);
+		sprintf(conv, longFormat, y + 2010, b10(m), b10(d), manufacturers[toupper(c) - 'A'], ser, b10(f), ext);
 	} else {
 		*conv = '\0';
 	}
